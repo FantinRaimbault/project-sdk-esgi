@@ -1,40 +1,35 @@
 <?php
 
-namespace App\Sdk\Platforms\Esgi;
+namespace App\Sdk\Platforms\Facebook;
 
 use App\Sdk\Http\Request;
 use App\Sdk\Http\HttpBuilder;
 use App\Sdk\Platforms\FacadeMapper;
 use App\Sdk\Platforms\AbstractPlatformSdk;
+use App\Sdk\Platforms\Facebook\FacebookMapper;
 
-class EsgiSdk extends AbstractPlatformSdk
+class FacebookSdk extends AbstractPlatformSdk
 {
 
-    const OAUTH_LINK = "http://localhost:8081/auth";
-    const FETCH_ACCESS_TOKEN_URL = "http://oauth-server:8081/token";
-    const API_URL = "http://oauth-server:8081";
+    const OAUTH_LINK = "https://facebook.com/v2.10/dialog/oauth";
+    const FETCH_ACCESS_TOKEN_URL = "https://graph.facebook.com/oauth/access_token";
+    const API_URL = "https://graph.facebook.com";
     const AUTHORIZATION = "Authorization: Bearer";
-    
-    /**
-     * __construct
-     *
-     * @param  mixed $settings
-     * @return void
-     */
+
     public function __construct(array $settings)
     {
         parent::__construct($settings);
     }
     
     /**
-     * Get Oauth Link
+     * Get Oauth link
      *
      * @return string
      */
     public function getOauthLink(): string
     {
         return HttpBuilder::build([
-            "url" => self::OAUTH_LINK, 
+            "url" => self::OAUTH_LINK,
             "queryParams" => [
                 "response_type" => "code",
                 "client_id" => $this->appId,
@@ -61,7 +56,6 @@ class EsgiSdk extends AbstractPlatformSdk
             ],
             "url" => self::FETCH_ACCESS_TOKEN_URL,
             "queryParams" => [
-                "grant_type" => "authorization_code",
                 "redirect_uri" => $this->redirectUri,
                 "client_id" => $this->appId,
                 "client_secret" => $this->appSecret,
@@ -96,11 +90,13 @@ class EsgiSdk extends AbstractPlatformSdk
         return json_decode($result, true);
     }
 
-    public function getUser($token)
+    function getUser($token)
     {
-        $user = $this->callApi('/api', 'GET', $token);
+        $user = $this->callApi('/me', 'GET', $token, [], [
+            "fields" => "first_name,last_name,email,birthday"
+        ]);
         $mapper = new FacadeMapper(
-            new EsgiMapper()
+            new FacebookMapper()
         );
         return $mapper->mapUser($user);
     }

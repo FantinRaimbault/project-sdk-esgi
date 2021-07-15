@@ -1,19 +1,22 @@
 <?php
 
-namespace App\Sdk\Platforms\Esgi;
+namespace App\Sdk\Platforms\Github;
 
 use App\Sdk\Http\Request;
 use App\Sdk\Http\HttpBuilder;
 use App\Sdk\Platforms\FacadeMapper;
 use App\Sdk\Platforms\AbstractPlatformSdk;
 
-class EsgiSdk extends AbstractPlatformSdk
+class GithubSdk extends AbstractPlatformSdk
 {
 
-    const OAUTH_LINK = "http://localhost:8081/auth";
-    const FETCH_ACCESS_TOKEN_URL = "http://oauth-server:8081/token";
-    const API_URL = "http://oauth-server:8081";
-    const AUTHORIZATION = "Authorization: Bearer";
+    const OAUTH_LINK = "https://github.com/login/oauth/authorize";
+    const FETCH_ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token";
+    const API_URL = "https://api.github.com";
+    const AUTHORIZATION = "Authorization: token";
+
+    private string $login;
+    private string $allowSignup;
     
     /**
      * __construct
@@ -24,10 +27,12 @@ class EsgiSdk extends AbstractPlatformSdk
     public function __construct(array $settings)
     {
         parent::__construct($settings);
+        $this->login = $settings['login'] ?? '';
+        $this->allowSignup = $settings['allow_signup'] ?? '';
     }
-    
+        
     /**
-     * Get Oauth Link
+     * Get Oauth link
      *
      * @return string
      */
@@ -38,8 +43,9 @@ class EsgiSdk extends AbstractPlatformSdk
             "queryParams" => [
                 "response_type" => "code",
                 "client_id" => $this->appId,
-                "redirect_uri" => $this->redirectUri,
-                "scope" => join(",", $this->scope),
+                "scope" => join(" ", $this->scope),
+                "login" => $this->login,
+                "allow_signup" => $this->allowSignup,
                 "state" => uniqid(),
             ]
         ]);
@@ -56,18 +62,16 @@ class EsgiSdk extends AbstractPlatformSdk
     {
         $result = Request::send([
             "http" => [
-                "method" => "GET",
+                "method" => "POST",
                 "header" => "Accept: application/json",
+                "content" => http_build_query([
+                    "client_id" => $this->appId,
+                    "client_secret" => $this->appSecret,
+                    "code" => $code,
+                    "redirect_uri" => $this->redirectUri,
+                ]),
             ],
-            "url" => self::FETCH_ACCESS_TOKEN_URL,
-            "queryParams" => [
-                "grant_type" => "authorization_code",
-                "redirect_uri" => $this->redirectUri,
-                "client_id" => $this->appId,
-                "client_secret" => $this->appSecret,
-                "code" => $code,
-                "state" => $state
-            ]
+            "url" => self::FETCH_ACCESS_TOKEN_URL
         ]);
         return json_decode($result, true)["access_token"];
     }
@@ -82,12 +86,13 @@ class EsgiSdk extends AbstractPlatformSdk
      * @param  mixed $params
      * @return array
      */
-    public function callApi(string $endpoint, string $method, string $token, array $body = [], array $params = [])
+    public function callApi(string $endpoint, string $method, string $token, array $body = [], array $params = []): array
     {
         $result = Request::send([
             "http" => [
                 "method" => $method,
                 "header" => self::AUTHORIZATION . " " . $token,
+                "user_agent" => "User-agent: " . $this->app ?? U_UNDEFINED_VARIABLE,
                 "content" => http_build_query($body),
             ],
             "queryParams" => $params,
@@ -95,13 +100,20 @@ class EsgiSdk extends AbstractPlatformSdk
         ]);
         return json_decode($result, true);
     }
-
+    
+    /**
+     * Get logged User
+     *
+     * @param  mixed $token
+     * @return array
+     */
     public function getUser($token)
     {
-        $user = $this->callApi('/api', 'GET', $token);
+        $userResult = $this->callApi('/user', 'GET', $token);
+        $userEmailResult = $this->callApi('/user/emails', 'GET', $token)[0] ?? [];
         $mapper = new FacadeMapper(
-            new EsgiMapper()
+            new GithubMapper()
         );
-        return $mapper->mapUser($user);
+        return $mapper->mapUser(array_merge($userResult, $userEmailResult));
     }
 }

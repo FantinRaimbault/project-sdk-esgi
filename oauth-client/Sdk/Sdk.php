@@ -11,7 +11,7 @@ class Sdk
 
     private array $providers;
     private string $lastPlatformKey;
-    
+
     /**
      * __construct
      *
@@ -25,7 +25,7 @@ class Sdk
         }
     }
 
-        
+
     /**
      * Get providers links
      *
