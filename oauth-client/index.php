@@ -24,6 +24,9 @@ const GITHUBCLIENT_ID = "10f9aa180dedc9beee5f";
 const GITHUBCLIENT_SECRET = "a585951da4c560eb7cf786b10ebf706c65ddc5ff";
 const GITHUB_APP = "esgi-sdk";
 
+const GOOGLECLIENT_ID = "628018363653-9ceiut7setpdcgil6fs92itk6jfrt1ga.apps.googleusercontent.com";
+const GOOGLECLIENT_SECRET = "yF_ZLYDLAHBhE22z24qqySCS";
+
 try {
 
     // instanciate Sdk class and pass array config
@@ -53,6 +56,15 @@ try {
                 "user:email", // uncheck "Keep my email addresses private" in your github profile to get your email
             ]
         ],
+        "google" => [
+            "appId" => GOOGLECLIENT_ID,
+            "appSecret" => GOOGLECLIENT_SECRET,
+            "redirectUri" => "https://localhost/success",
+            "scope" => [
+                "https://www.googleapis.com/auth/userinfo.email",
+                "https://www.googleapis.com/auth/userinfo.profile"
+            ]
+            ],
     ]);
 
     $route = strtok($_SERVER['REQUEST_URI'], '?');
