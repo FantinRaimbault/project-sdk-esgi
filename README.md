@@ -1,4 +1,4 @@
-# SDK-ESGI-PROJECT 3IW1 : Raimbault Fantin & Oliwier Maziarz
+# SDK-ESGI-PROJECT 3IW1 : Raimbault Fantin & Maziarz Oliwier
 Projet SDK pour l'école ESGI
 
 ## Run app
