@@ -64,19 +64,19 @@ try {
                 "https://www.googleapis.com/auth/userinfo.email",
                 "https://www.googleapis.com/auth/userinfo.profile"
             ]
-            ],
+        ],
     ]);
 
     $route = strtok($_SERVER['REQUEST_URI'], '?');
     switch ($route) {
-        // Login route
+            // Login route
         case '/auth-code':
             echo '<h1>Login with Auth-Code</h1>';
             foreach ($sdk->getLinks() as $platformKey => $link) {
                 echo "<a href='$link'>Connect with : $platformKey</a><br/>";
             }
             break;
-        // Success route
+            // Success route
         case '/success':
             ["code" => $code, "state" => $state] = $_GET;
             $token = $sdk->fetchAccessToken($code, $state);
